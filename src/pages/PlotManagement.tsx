@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { Plus, Search, Map as MapIcon, Grid, List, Leaf, Droplets, Sun, Mountain, Edit2, Trash2, X } from 'lucide-react';
 
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
@@ -9,7 +10,18 @@ const FEATURE_ICONS: Record<string, React.ReactNode> = {
   'Hilltop View': <Mountain size={14} />,
 };
 
-const PLOT_TYPES = ['Lawn Lot', 'Mausoleum', 'Columbarium Vault', 'Family Estate'];
+const PLOT_TYPES = [
+  'Bone Chamber Unit (Basic)',
+  'Bone Chamber Unit (Standard/Mid-range)',
+  'Bone Chamber Unit (Premium/Sealed)'
+];
+
+const PLOT_PRICES: Record<string, number> = {
+  'Bone Chamber Unit (Basic)': 28000,
+  'Bone Chamber Unit (Standard/Mid-range)': 45000,
+  'Bone Chamber Unit (Premium/Sealed)': 65000,
+};
+
 const AVAILABLE_FEATURES = ['Tree Shaded', 'Waterfront', 'Morning Sun', 'Hilltop View', 'Roadside Access', 'Private Pathway'];
 
 const PlotManagement = () => {
@@ -17,6 +29,7 @@ const PlotManagement = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
+  const { isAdmin } = useAuth();
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,8 +40,8 @@ const PlotManagement = () => {
     plot_number: '',
     section: '',
     status: 'available',
-    type: 'Lawn Lot',
-    price: '',
+    type: 'Bone Chamber Unit (Basic)',
+    price: '28000',
     size: '',
     features: [] as string[]
   });
@@ -56,7 +69,7 @@ const PlotManagement = () => {
         plot_number: plot.plot_number,
         section: plot.section || '',
         status: plot.status || 'available',
-        type: plot.type || 'Lawn Lot',
+        type: plot.type || 'Bone Chamber Unit (Basic)',
         price: plot.price?.toString() || '',
         size: plot.size || '',
         features: plot.features || [],
@@ -67,8 +80,8 @@ const PlotManagement = () => {
         plot_number: '',
         section: '',
         status: 'available',
-        type: 'Lawn Lot',
-        price: '',
+        type: 'Bone Chamber Unit (Basic)',
+        price: '28000',
         size: '',
         features: [],
       });
@@ -114,9 +127,9 @@ const PlotManagement = () => {
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'occupied': return 'bg-rose-50 text-rose-700 border-rose-200';
-      case 'reserved': return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'available': return 'bg-white text-blue-600 border-blue-200 shadow-sm';
+      case 'occupied': return 'bg-blue-600 text-white border-blue-600 shadow-sm';
+      case 'reserved': return 'bg-blue-50 text-blue-800 border-blue-300 shadow-sm';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
@@ -148,10 +161,12 @@ const PlotManagement = () => {
               <List size={18} />
             </button>
           </div>
-          <button onClick={() => handleOpenModal()} className="btn-primary flex items-center gap-2 whitespace-nowrap shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all">
-            <Plus size={20} className="stroke-[2.5]" />
-            <span className="font-semibold">Curate New Plot</span>
-          </button>
+          {isAdmin && (
+            <button onClick={() => handleOpenModal()} className="btn-primary flex items-center gap-2 whitespace-nowrap shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all">
+              <Plus size={20} className="stroke-[2.5]" />
+              <span className="font-semibold">Curate New Plot</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -200,7 +215,7 @@ const PlotManagement = () => {
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-500 font-medium">Type</span>
-                      <span className="text-gray-900 font-semibold">{plot.type || 'Lawn Lot'}</span>
+                      <span className="text-gray-900 font-semibold">{plot.type || 'Bone Chamber Unit'}</span>
                     </div>
                     {plot.size && (
                       <div className="flex items-center justify-between text-sm">
@@ -211,7 +226,7 @@ const PlotManagement = () => {
                     {plot.price && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-500 font-medium">Value</span>
-                        <span className="text-emerald-600 font-bold">${plot.price.toLocaleString()}</span>
+                        <span className="text-emerald-600 font-bold">₱{plot.price.toLocaleString()}</span>
                       </div>
                     )}
                   </div>
@@ -228,22 +243,24 @@ const PlotManagement = () => {
                 )}
               </div>
 
-              <div className={`bg-gray-50/50 border-t border-gray-100 p-3 flex justify-end gap-2 ${viewMode === 'grid' ? '' : 'border-t-0 bg-transparent flex-none'}`}>
-                <button
-                  onClick={() => handleOpenModal(plot)}
-                  className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-                  title="Edit Plot"
-                >
-                  <Edit2 size={18} />
-                </button>
-                <button
-                  onClick={() => handleDelete(plot.id)}
-                  className="p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                  title="Delete Plot"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
+              {isAdmin && (
+                <div className={`bg-gray-50/50 border-t border-gray-100 p-3 flex justify-end gap-2 ${viewMode === 'grid' ? '' : 'border-t-0 bg-transparent flex-none'}`}>
+                  <button
+                    onClick={() => handleOpenModal(plot)}
+                    className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                    title="Edit Plot"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(plot.id)}
+                    className="p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                    title="Delete Plot"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -299,7 +316,14 @@ const PlotManagement = () => {
                   <select
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium appearance-none"
                     value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      setFormData({ 
+                        ...formData, 
+                        type: newType, 
+                        price: PLOT_PRICES[newType] ? PLOT_PRICES[newType].toString() : formData.price 
+                      });
+                    }}
                   >
                     {PLOT_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
                   </select>
@@ -320,7 +344,7 @@ const PlotManagement = () => {
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Valuation ($)</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Valuation (₱)</label>
                   <input
                     type="number"
                     min="0"

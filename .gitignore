@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+supabase/schema.sql
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

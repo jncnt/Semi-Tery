@@ -16,27 +16,22 @@ const Dashboard = () => {
       // For now, let's try to fetch real counts if tables exist
       const { count: total } = await supabase.from('plots').select('*', { count: 'exact', head: true });
       const { count: occupied } = await supabase.from('plots').select('*', { count: 'exact', head: true }).eq('status', 'occupied');
-      const { data: recent } = await supabase.from('burial_records').select('*').order('burial_date', { ascending: false }).limit(5);
+      const { data: recent } = await supabase.from('burial_records').select('*, plots(plot_number)').order('burial_date', { ascending: false }).limit(5);
 
       setStats({
-        totalPlots: total || 1200, // Fallback for demo
-        occupiedPlots: occupied || 850,
-        availablePlots: (total || 1200) - (occupied || 850),
-        recentBurials: recent || [
-          { full_name: 'John Doe', burial_date: '2024-03-20', plot_number: 'A-102' },
-          { full_name: 'Jane Smith', burial_date: '2024-03-18', plot_number: 'B-44' },
-          { full_name: 'Mary Johnson', burial_date: '2024-03-15', plot_number: 'C-21' },
-          { full_name: 'Robert Brown', burial_date: '2024-03-10', plot_number: 'A-55' },
-        ],
+        totalPlots: total || 0,
+        occupiedPlots: occupied || 0,
+        availablePlots: (total || 0) - (occupied || 0),
+        recentBurials: recent || [],
       });
     };
 
     fetchStats();
   }, []);
 
-  const StatCard = ({ icon: Icon, label, value, color }: any) => (
+  const StatCard = ({ icon: Icon, label, value, bgClass, textClass }: any) => (
     <div className="bg-white border border-gray-200 p-6 rounded-xl flex items-center gap-4">
-      <div className={`p-3 rounded-lg ${color} bg-opacity-10 text-${color.split('-')[1]}-600`}>
+      <div className={`p-3 rounded-lg ${bgClass} ${textClass}`}>
         <Icon size={24} />
       </div>
       <div>
@@ -54,10 +49,10 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={MapPin} label="Total Plots" value={stats.totalPlots} color="bg-blue-500" />
-        <StatCard icon={CheckCircle} label="Occupied Plots" value={stats.occupiedPlots} color="bg-green-500" />
-        <StatCard icon={Clock} label="Available Plots" value={stats.availablePlots} color="bg-primary" />
-        <StatCard icon={Users} label="Total Records" value={stats.occupiedPlots} color="bg-purple-500" />
+        <StatCard icon={MapPin} label="Total Plots" value={stats.totalPlots} bgClass="bg-blue-500/10" textClass="text-blue-600" />
+        <StatCard icon={CheckCircle} label="Occupied Plots" value={stats.occupiedPlots} bgClass="bg-blue-600/10" textClass="text-blue-600" />
+        <StatCard icon={Clock} label="Available Plots" value={stats.availablePlots} bgClass="bg-blue-400/10" textClass="text-blue-600" />
+        <StatCard icon={Users} label="Total Records" value={stats.occupiedPlots} bgClass="bg-blue-700/10" textClass="text-blue-600" />
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -76,20 +71,26 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {stats.recentBurials.map((burial, i) => (
-                <tr key={i} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{burial.full_name}</td>
-                  <td className="px-6 py-4 text-gray-500">
-                    {format(new Date(burial.burial_date), 'MMM d, yyyy')}
-                  </td>
-                  <td className="px-6 py-4 text-gray-500 font-mono text-sm">{burial.plot_number || 'N/A'}</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Completed
-                    </span>
-                  </td>
+              {stats.recentBurials.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">No recent burials found.</td>
                 </tr>
-              ))}
+              ) : (
+                stats.recentBurials.map((burial, i) => (
+                  <tr key={burial.id || i} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-gray-900">{burial.full_name}</td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {burial.burial_date ? format(new Date(burial.burial_date), 'MMM d, yyyy') : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500 font-mono text-sm">{burial.plots?.plot_number || 'N/A'}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Completed
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

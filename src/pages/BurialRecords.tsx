@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Search, Filter, Edit2, Trash2, ExternalLink } from 'lucide-react';
+import { Filter, Edit2, Trash2, ExternalLink, Search, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const BurialRecords = () => {
   const [records, setRecords] = useState<any[]>([]);
@@ -10,6 +11,7 @@ const BurialRecords = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
+  const { isAdmin } = useAuth();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -109,13 +111,15 @@ const BurialRecords = () => {
           <h1 className="text-3xl font-bold text-gray-900">Burial Records</h1>
           <p className="text-gray-500">Manage and view all deceased records.</p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="btn-primary flex items-center justify-center gap-2"
-        >
-          <Plus size={20} />
-          Add New Record
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => handleOpenModal()}
+            className="btn-primary flex items-center justify-center gap-2"
+          >
+            <Plus size={20} />
+            Add New Record
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col md:flex-row gap-4">
@@ -182,20 +186,24 @@ const BurialRecords = () => {
                         >
                           <ExternalLink size={18} />
                         </Link>
-                        <button
-                          onClick={() => handleOpenModal(record)}
-                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                          title="Edit"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(record.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {isAdmin && (
+                          <>
+                            <button
+                              onClick={() => handleOpenModal(record)}
+                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                              title="Edit"
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(record.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                              title="Delete"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

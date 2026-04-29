@@ -16,7 +16,7 @@ const Sidebar = () => {
   return (
     <aside className="w-64 border-r border-gray-200 flex flex-col h-screen sticky top-0 bg-white">
       <div className="p-6 border-b border-gray-100 mb-4">
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight">CemeteryPro</h1>
+        <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-snug">GARDEN OF PEACE<br />MEMORIAL PARK</h1>
         <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">Management System</p>
       </div>
 
@@ -42,7 +42,7 @@ const Sidebar = () => {
       <div className="p-4 border-t border-gray-100">
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors border border-transparent"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-colors border border-transparent"
         >
           <LogOut size={20} />
           <span className="font-medium">Sign Out</span>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 const Login = () => {
@@ -28,8 +28,8 @@ const Login = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-md bg-white p-10 rounded-xl border border-gray-200">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">CemeteryPro</h1>
-          <p className="text-gray-500 mt-2 text-sm">Sign in to manage cemetery records</p>
+          <h1 className="text-2xl font-bold text-gray-900 leading-tight">GARDEN OF PEACE<br />MEMORIAL PARK</h1>
+          <p className="text-gray-500 mt-3 text-sm">Sign in to manage cemetery records</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -72,9 +72,12 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-8 pt-8 border-t border-gray-100 text-center">
-          <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
-            Institutional Access Only
+        <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+          <p className="text-sm text-gray-500">
+            Don't have an account?{' '}
+            <Link to="/signup" className="text-blue-600 font-semibold hover:underline">
+              Sign Up
+            </Link>
           </p>
         </div>
       </div>

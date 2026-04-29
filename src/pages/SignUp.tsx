@@ -46,8 +46,12 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-md bg-white p-10 rounded-xl border border-gray-200 shadow-sm">
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans relative overflow-hidden">
+      {/* Decorative background blobs */}
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/15 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-300/20 rounded-full blur-[120px] pointer-events-none"></div>
+      
+      <div className="w-full max-w-md card relative z-10 p-10">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 leading-tight">GARDEN OF PEACE<br />MEMORIAL PARK</h1>
           <p className="text-gray-500 mt-3 text-sm">Create a public account to browse records</p>

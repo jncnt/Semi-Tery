@@ -1,9 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --color-primary: #3A9AFF;
-  --color-primary-hover: #2F80ED;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-primary-hover: #2185EE;
+  --color-primary-light: #EFF6FF;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 :root {
@@ -11,7 +13,9 @@
   line-height: 1.5;
   font-weight: 400;
   color: #1F2937;
-  background-color: #FFFFFF;
+  background-color: #F8FAFC;
+  background-image: radial-gradient(#E2E8F0 1px, transparent 1px);
+  background-size: 20px 20px;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -27,15 +31,14 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-white py-3 px-4 rounded-lg font-medium transition-colors hover:bg-primary-hover focus:outline-none;
-    border: 1px solid #3A9AFF;
+    @apply bg-primary text-white py-3 px-5 rounded-xl font-semibold shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5 hover:shadow-blue-500/40 hover:bg-primary-hover focus:ring-4 focus:ring-blue-500/20 outline-none border-0;
   }
 
   .input-field {
-    @apply w-full border border-gray-300 rounded-lg p-3 transition-colors focus:outline-none focus:border-blue-400;
+    @apply w-full bg-white border border-gray-200 rounded-xl p-3.5 transition-all focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-primary shadow-sm text-gray-800 placeholder-gray-400;
   }
 
   .card {
-    @apply bg-white border border-gray-200 rounded-lg p-4;
+    @apply bg-white/80 backdrop-blur-md border border-gray-100/50 rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300;
   }
 }

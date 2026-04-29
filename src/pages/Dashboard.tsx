@@ -30,22 +30,22 @@ const Dashboard = () => {
   }, []);
 
   const StatCard = ({ icon: Icon, label, value, bgClass, textClass }: any) => (
-    <div className="bg-white border border-gray-200 p-6 rounded-xl flex items-center gap-4">
-      <div className={`p-3 rounded-lg ${bgClass} ${textClass}`}>
-        <Icon size={24} />
+    <div className="card flex items-center gap-5">
+      <div className={`p-4 rounded-2xl ${bgClass} ${textClass} shadow-inner`}>
+        <Icon size={26} strokeWidth={2.5} />
       </div>
       <div>
-        <p className="text-sm font-medium text-gray-500">{label}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+        <p className="text-3xl font-black text-gray-800 tracking-tight">{value}</p>
       </div>
     </div>
   );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500">Overview of cemetery operations and records.</p>
+      <div className="flex flex-col gap-2">
+        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">System Overview</h1>
+        <p className="text-gray-500 text-lg">Bird's-eye view of cemetery operations and capacity.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -55,7 +55,7 @@ const Dashboard = () => {
         <StatCard icon={Users} label="Total Records" value={stats.occupiedPlots} bgClass="bg-blue-700/10" textClass="text-blue-600" />
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="card p-0 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-bold text-gray-900 text-lg">Recent Burials</h3>
           <button className="text-primary text-sm font-semibold hover:underline">View All</button>
@@ -84,7 +84,7 @@ const Dashboard = () => {
                     </td>
                     <td className="px-6 py-4 text-gray-500 font-mono text-sm">{burial.plots?.plot_number || 'N/A'}</td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
                         Completed
                       </span>
                     </td>

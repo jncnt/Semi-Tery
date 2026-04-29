@@ -16,7 +16,7 @@ const Sidebar = () => {
   return (
     <aside className="w-64 border-r border-gray-200 flex flex-col h-screen sticky top-0 bg-white">
       <div className="p-6 border-b border-gray-100 mb-4">
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-snug">GARDEN OF PEACE<br />MEMORIAL PARK</h1>
+        <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-br from-blue-700 to-blue-400 tracking-tight leading-snug">GARDEN OF<br/>PEACE</h1>
         <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">Management System</p>
       </div>
 
@@ -26,10 +26,10 @@ const Sidebar = () => {
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              `flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-300 font-semibold ${
                 isActive
-                  ? 'bg-blue-50 text-primary border border-blue-100'
-                  : 'text-gray-500 hover:bg-gray-50 border border-transparent'
+                  ? 'bg-gradient-to-r from-blue-50/80 to-blue-100/30 text-blue-700 shadow-sm shadow-blue-500/10 border border-blue-200/60 translate-x-1'
+                  : 'text-gray-500 hover:bg-gray-50/80 hover:text-gray-800 border border-transparent'
               }`
             }
           >
@@ -42,7 +42,7 @@ const Sidebar = () => {
       <div className="p-4 border-t border-gray-100">
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-colors border border-transparent"
+          className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-gray-500 font-semibold hover:bg-red-50/80 hover:text-red-600 transition-all duration-300 border border-transparent hover:border-red-100"
         >
           <LogOut size={20} />
           <span className="font-medium">Sign Out</span>

@@ -6,6 +6,7 @@ import BurialRecords from './pages/BurialRecords';
 import PlotManagement from './pages/PlotManagement';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
+import Reservations from './pages/Reservations';
 import MemorialPage from './pages/MemorialPage';
 import { useAuth } from './contexts/AuthContext';
 
@@ -20,7 +21,7 @@ function App() {
         <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
         <Route path="/signup" element={!session ? <SignUp /> : <Navigate to="/" />} />
         <Route path="/memorial/:id" element={<MemorialPage />} />
-        
+
         <Route
           path="/*"
           element={
@@ -34,6 +35,7 @@ function App() {
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/records" element={<BurialRecords />} />
                       <Route path="/plots" element={<PlotManagement />} />
+                      <Route path="/reservations" element={<Reservations />} />
                       <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                   </main>

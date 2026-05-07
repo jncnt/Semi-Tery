@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Filter, Edit2, Trash2, ExternalLink, Search, Plus } from 'lucide-react';
+import { Filter, Edit2, Trash2, ExternalLink, Search, Plus, MapPin, ChevronDown, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +11,10 @@ const BurialRecords = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [availablePlots, setAvailablePlots] = useState<any[]>([]);
+  const [inlineAssignId, setInlineAssignId] = useState<string | null>(null);
+  const [inlinePlotSearch, setInlinePlotSearch] = useState('');
+  const inlineRef = useRef<HTMLDivElement>(null);
   const { isAdmin } = useAuth();
 
   // Form State
@@ -22,6 +26,14 @@ const BurialRecords = () => {
     plot_id: '',
     notes: '',
   });
+
+  const fetchPlots = async () => {
+    const { data, error } = await supabase
+      .from('plots')
+      .select('id, plot_number, section, block, status')
+      .order('plot_number');
+    if (!error) setAvailablePlots(data || []);
+  };
 
   const fetchRecords = async () => {
     setLoading(true);
@@ -37,7 +49,31 @@ const BurialRecords = () => {
 
   useEffect(() => {
     fetchRecords();
+    fetchPlots();
   }, []);
+
+  // Close inline dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (inlineRef.current && !inlineRef.current.contains(e.target as Node)) {
+        setInlineAssignId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const handleInlineAssign = async (recordId: string, plotId: string) => {
+    const { error } = await supabase
+      .from('burial_records')
+      .update({ plot_id: plotId })
+      .eq('id', recordId);
+    if (error) alert(error.message);
+    else {
+      setInlineAssignId(null);
+      fetchRecords();
+    }
+  };
 
   const handleOpenModal = (record: any = null) => {
     if (record) {
@@ -67,7 +103,7 @@ const BurialRecords = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...formData };
-    
+
     // Convert empty strings to null for dates/plot_id
     if (!payload.birth_date) (payload as any).birth_date = null;
     if (!payload.death_date) (payload as any).death_date = null;
@@ -99,7 +135,10 @@ const BurialRecords = () => {
     }
   };
 
-  const filteredRecords = records.filter(r => 
+  // Collect plot IDs already assigned to burial records
+  const assignedPlotIds = new Set(records.map(r => r.plot_id).filter(Boolean));
+
+  const filteredRecords = records.filter(r =>
     r.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (r.plots?.plot_number || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -172,13 +211,75 @@ const BurialRecords = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-500">
-                      <div className="flex flex-col">
-                        <span className="font-mono text-gray-900">{record.plots?.plot_number || 'Unassigned'}</span>
-                        <span className="text-xs uppercase">{record.plots?.section || '-'}</span>
-                      </div>
+                      {record.plots ? (
+                        <div className="flex flex-col">
+                          <span className="font-mono text-gray-900">{record.plots.plot_number}</span>
+                          <span className="text-xs uppercase">{record.plots.section || '-'}</span>
+                        </div>
+                      ) : (
+                        <div className="relative" ref={inlineAssignId === record.id ? inlineRef : undefined}>
+                          {isAdmin ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setInlineAssignId(inlineAssignId === record.id ? null : record.id);
+                                  setInlinePlotSearch('');
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 hover:border-amber-300 transition-all"
+                              >
+                                <MapPin size={13} />
+                                Assign Plot
+                                <ChevronDown size={13} className={`transition-transform ${inlineAssignId === record.id ? 'rotate-180' : ''}`} />
+                              </button>
+                              {inlineAssignId === record.id && (
+                                <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-40 overflow-hidden">
+                                  <div className="p-2 border-b border-gray-100">
+                                    <input
+                                      type="text"
+                                      placeholder="Search plots..."
+                                      className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                      value={inlinePlotSearch}
+                                      onChange={(e) => setInlinePlotSearch(e.target.value)}
+                                      autoFocus
+                                    />
+                                  </div>
+                                  <div className="max-h-48 overflow-y-auto">
+                                    {availablePlots
+                                      .filter(p =>
+                                        (p.status === 'available') &&
+                                        !assignedPlotIds.has(p.id) &&
+                                        (p.plot_number.toLowerCase().includes(inlinePlotSearch.toLowerCase()) ||
+                                        (p.section || '').toLowerCase().includes(inlinePlotSearch.toLowerCase()))
+                                      )
+                                      .map(plot => (
+                                        <button
+                                          key={plot.id}
+                                          onClick={() => handleInlineAssign(record.id, plot.id)}
+                                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 flex items-center justify-between transition-colors"
+                                        >
+                                          <div>
+                                            <span className="font-semibold text-gray-900">{plot.plot_number}</span>
+                                            <span className="text-gray-400 text-xs ml-2">{[plot.section, plot.block].filter(Boolean).join(' · ')}</span>
+                                          </div>
+                                          <Check size={14} className="text-blue-500 opacity-0 group-hover:opacity-100" />
+                                        </button>
+                                      ))
+                                    }
+                                    {availablePlots.filter(p => p.status === 'available' && !assignedPlotIds.has(p.id) && p.plot_number.toLowerCase().includes(inlinePlotSearch.toLowerCase())).length === 0 && (
+                                      <p className="px-4 py-3 text-xs text-gray-400 text-center">No available plots found</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-gray-400 italic text-xs">Unassigned</span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2">
                         <Link
                           to={`/memorial/${record.id}`}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
@@ -264,6 +365,28 @@ const BurialRecords = () => {
                   value={formData.burial_date}
                   onChange={(e) => setFormData({ ...formData, burial_date: e.target.value })}
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assign Plot</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <select
+                    className="input-field pl-10 appearance-none"
+                    value={formData.plot_id}
+                    onChange={(e) => setFormData({ ...formData, plot_id: e.target.value })}
+                  >
+                    <option value="">No Plot (Unassigned)</option>
+                    {availablePlots
+                      .filter(p => (p.status === 'available' && !assignedPlotIds.has(p.id)) || p.id === formData.plot_id)
+                      .map(plot => (
+                        <option key={plot.id} value={plot.id}>
+                          {plot.plot_number} — {[plot.section, plot.block].filter(Boolean).join(' · ') || 'No location'}
+                        </option>
+                      ))
+                    }
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>

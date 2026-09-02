@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #3A9AFF;
-  --color-primary-hover: #2F80ED;
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
@@ -10,7 +10,7 @@
   font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
-  color: #1F2937;
+  color: #0F172A;
   background-color: #FFFFFF;
 
   font-synthesis: none;
@@ -23,19 +23,35 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #FFFFFF;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-white py-3 px-4 rounded-lg font-medium transition-colors hover:bg-primary-hover focus:outline-none;
-    border: 1px solid #3A9AFF;
+    @apply bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 hover:bg-blue-700 active:scale-[0.98] shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 focus:outline-none focus:ring-2 focus:ring-blue-500/40;
   }
 
   .input-field {
-    @apply w-full border border-gray-300 rounded-lg p-3 transition-colors focus:outline-none focus:border-blue-400;
+    @apply w-full bg-white border border-slate-200 rounded-xl p-3 px-4 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium placeholder:text-slate-400;
   }
 
   .card {
-    @apply bg-white border border-gray-200 rounded-lg p-4;
+    @apply bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200;
   }
 }

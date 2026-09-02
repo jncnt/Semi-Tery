@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Map, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Map, LogOut, Trees } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const Sidebar = () => {
@@ -14,38 +14,52 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-64 border-r border-gray-200 flex flex-col h-screen sticky top-0 bg-white">
-      <div className="p-6 border-b border-gray-100 mb-4">
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-snug">GARDEN OF PEACE<br />MEMORIAL PARK</h1>
-        <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">Management System</p>
+    <aside className="w-68 border-r border-slate-200/80 flex flex-col h-screen sticky top-0 bg-white select-none z-20">
+      <div className="p-6 border-b border-slate-100 mb-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+          <Trees size={22} strokeWidth={2.2} />
+        </div>
+        <div>
+          <h1 className="text-base font-extrabold text-slate-900 tracking-tight leading-tight">
+            GARDEN OF PEACE
+          </h1>
+          <p className="text-[11px] font-semibold text-blue-600 tracking-wider uppercase mt-0.5">Memorial Park</p>
+        </div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1">
+      <nav className="flex-1 px-3 space-y-1.5">
+        <div className="px-3 pb-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          Main Navigation
+        </div>
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              `flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-200 font-semibold text-sm ${
                 isActive
-                  ? 'bg-blue-50 text-primary border border-blue-100'
-                  : 'text-gray-500 hover:bg-gray-50 border border-transparent'
+                  ? 'bg-blue-50/80 text-blue-700 border border-blue-100 shadow-xs translate-x-0.5'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:translate-x-0.5'
               }`
             }
           >
-            <item.icon size={20} />
-            <span className="font-medium">{item.label}</span>
+            {({ isActive }) => (
+              <>
+                <item.icon size={20} className={isActive ? 'text-blue-600 stroke-[2.2]' : 'text-slate-400 group-hover:text-slate-600'} />
+                <span>{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      <div className="p-4 border-t border-gray-100">
+      <div className="p-4 border-t border-slate-100">
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-colors border border-transparent"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 font-semibold text-sm border border-transparent hover:border-red-100"
         >
-          <LogOut size={20} />
-          <span className="font-medium">Sign Out</span>
+          <LogOut size={18} className="text-slate-400 group-hover:text-red-500" />
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>

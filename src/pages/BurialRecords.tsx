@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Filter, Edit2, Trash2, ExternalLink, Search, Plus } from 'lucide-react';
+import { Filter, Edit2, Trash2, ExternalLink, Search, Plus, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const BurialRecords = () => {
   const [records, setRecords] = useState<any[]>([]);
+  const [plots, setPlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,8 +36,19 @@ const BurialRecords = () => {
     setLoading(false);
   };
 
+  const fetchPlots = async () => {
+    const { data, error } = await supabase
+      .from('plots')
+      .select('id, plot_number, section, status')
+      .order('plot_number');
+
+    if (error) console.error('Error fetching plots:', error);
+    else setPlots(data || []);
+  };
+
   useEffect(() => {
     fetchRecords();
+    fetchPlots();
   }, []);
 
   const handleOpenModal = (record: any = null) => {
@@ -87,8 +99,22 @@ const BurialRecords = () => {
       if (error) alert(error.message);
     }
 
+    if (payload.plot_id) {
+      await supabase.from('plots').update({ status: 'occupied' }).eq('id', payload.plot_id);
+    }
+    if (editingRecord?.plot_id && editingRecord.plot_id !== payload.plot_id) {
+      const { count } = await supabase
+        .from('burial_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('plot_id', editingRecord.plot_id);
+      if (!count) {
+        await supabase.from('plots').update({ status: 'available' }).eq('id', editingRecord.plot_id);
+      }
+    }
+
     setIsModalOpen(false);
     fetchRecords();
+    fetchPlots();
   };
 
   const handleDelete = async (id: string) => {
@@ -105,83 +131,85 @@ const BurialRecords = () => {
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-12 font-sans bg-white">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-100 pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Burial Records</h1>
-          <p className="text-gray-500">Manage and view all deceased records.</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Burial Records</h1>
+          <p className="text-slate-500 mt-1 text-sm">Manage and view all registered deceased records.</p>
         </div>
         {isAdmin && (
           <button
             onClick={() => handleOpenModal()}
-            className="btn-primary flex items-center justify-center gap-2"
+            className="btn-primary flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 hover:shadow-blue-500/30"
           >
-            <Plus size={20} />
-            Add New Record
+            <Plus size={18} strokeWidth={2.5} />
+            <span>Add New Record</span>
           </button>
         )}
       </div>
 
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             type="text"
-            placeholder="Search by name or plot number..."
-            className="input-field pl-10 h-12"
+            placeholder="Search by deceased name or plot number..."
+            className="input-field pl-11 h-12 shadow-xs"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button className="px-4 py-2 border border-gray-200 rounded-lg flex items-center gap-2 text-gray-600 hover:bg-gray-50 h-12">
-          <Filter size={18} />
-          Filters
+        <button className="px-5 h-12 border border-slate-200/80 rounded-xl flex items-center gap-2 text-slate-600 hover:bg-slate-50 font-semibold text-sm transition-all shadow-xs">
+          <Filter size={16} />
+          <span>Filters</span>
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-widest">Full Name</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-widest">Dates</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-widest">Plot / Section</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-widest text-right">Actions</th>
+              <tr className="bg-slate-50/80 border-b border-slate-100">
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Full Name</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Dates</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Plot / Section</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 text-sm">
+            <tbody className="divide-y divide-slate-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-gray-400">Loading records...</td>
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400">Loading records...</td>
                 </tr>
               ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-gray-400">No records found.</td>
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400">No records found.</td>
                 </tr>
               ) : (
                 filteredRecords.map((record) => (
-                  <tr key={record.id} className="hover:bg-gray-50 transition-colors group">
+                  <tr key={record.id} className="hover:bg-slate-50/70 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-gray-900">{record.full_name}</div>
+                      <div className="font-bold text-slate-900 text-base">{record.full_name}</div>
                     </td>
-                    <td className="px-6 py-4 text-gray-500">
-                      <div className="flex flex-col">
+                    <td className="px-6 py-4 text-slate-600">
+                      <div className="flex flex-col text-xs font-medium space-y-0.5">
                         <span>Birth: {record.birth_date ? format(new Date(record.birth_date), 'MMM d, yyyy') : 'N/A'}</span>
                         <span>Death: {record.death_date ? format(new Date(record.death_date), 'MMM d, yyyy') : 'N/A'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-500">
+                    <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-mono text-gray-900">{record.plots?.plot_number || 'Unassigned'}</span>
-                        <span className="text-xs uppercase">{record.plots?.section || '-'}</span>
+                        <span className="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/60 w-fit">
+                          {record.plots?.plot_number || 'Unassigned'}
+                        </span>
+                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-1">{record.plots?.section || '-'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-1.5">
                         <Link
                           to={`/memorial/${record.id}`}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
                           title="View Memorial"
                         >
                           <ExternalLink size={18} />
@@ -190,14 +218,14 @@ const BurialRecords = () => {
                           <>
                             <button
                               onClick={() => handleOpenModal(record)}
-                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                              className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition-colors"
                               title="Edit"
                             >
                               <Edit2 size={18} />
                             </button>
                             <button
                               onClick={() => handleDelete(record.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                              className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                               title="Delete"
                             >
                               <Trash2 size={18} />
@@ -264,6 +292,24 @@ const BurialRecords = () => {
                   value={formData.burial_date}
                   onChange={(e) => setFormData({ ...formData, burial_date: e.target.value })}
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Plot / Section</label>
+                <div className="relative">
+                  <select
+                    className="input-field pr-10 appearance-none cursor-pointer"
+                    value={formData.plot_id}
+                    onChange={(e) => setFormData({ ...formData, plot_id: e.target.value })}
+                  >
+                    <option value="">-- Select Plot / Section (Optional) --</option>
+                    {plots.map((plot) => (
+                      <option key={plot.id} value={plot.id}>
+                        {plot.plot_number} {plot.section ? `(${plot.section})` : ''} - {plot.status.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>

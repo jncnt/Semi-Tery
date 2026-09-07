@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Users, MapPin, CheckCircle2, Clock, ArrowRight, BookmarkCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { getDisplayName } from '../lib/nameUtils';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -109,7 +110,7 @@ const Dashboard = () => {
                 ) : (
                   stats.recentBurials.map((burial, i) => (
                     <tr key={burial.id || i} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-6 py-4 font-bold text-slate-900">{burial.full_name}</td>
+                      <td className="px-6 py-4 font-bold text-slate-900">{getDisplayName(burial)}</td>
                       <td className="px-6 py-4 text-slate-600 font-medium">
                         {burial.burial_date ? format(new Date(burial.burial_date), 'MMM d, yyyy') : 'N/A'}
                       </td>

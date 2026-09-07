@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import { Heart, Calendar, MapPin, Feather } from 'lucide-react';
+import { getDisplayName } from '../lib/nameUtils';
 
 const MemorialPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,7 +43,7 @@ const MemorialPage = () => {
             {record.photo_url ? (
               <img
                 src={record.photo_url}
-                alt={record.full_name}
+                alt={getDisplayName(record)}
                 className="w-48 h-48 rounded-full border-4 border-white shadow-md object-cover mb-6"
               />
             ) : (
@@ -51,7 +52,7 @@ const MemorialPage = () => {
               </div>
             )}
             
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">{record.full_name}</h1>
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">{getDisplayName(record)}</h1>
             <div className="flex items-center gap-4 mt-2 text-gray-500 font-medium italic">
               <span>{record.birth_date ? format(new Date(record.birth_date), 'yyyy') : '...'}</span>
               <span>—</span>

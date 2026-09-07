@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 180" role="img" aria-labelledby="title desc">
+  <title id="title">Garden of Peace Memorial Park</title>
+  <desc id="desc">Laurel branches framing a peaceful garden arch and tree.</desc>
+  <rect width="520" height="180" rx="18" fill="#fbfaf5"/>
+  <g fill="none" stroke="#75846d" stroke-width="5" stroke-linecap="round">
+    <path d="M70 155C20 113 34 42 112 20"/>
+    <path d="M450 155C500 113 486 42 408 20"/>
+  </g>
+  <g fill="#9aa788" stroke="#66765f" stroke-width="2">
+    <ellipse cx="56" cy="124" rx="9" ry="24" transform="rotate(-43 56 124)"/>
+    <ellipse cx="48" cy="94" rx="9" ry="24" transform="rotate(-32 48 94)"/>
+    <ellipse cx="53" cy="63" rx="9" ry="23" transform="rotate(-20 53 63)"/>
+    <ellipse cx="75" cy="39" rx="9" ry="23" transform="rotate(15 75 39)"/>
+    <ellipse cx="100" cy="23" rx="9" ry="23" transform="rotate(44 100 23)"/>
+    <ellipse cx="464" cy="124" rx="9" ry="24" transform="rotate(43 464 124)"/>
+    <ellipse cx="472" cy="94" rx="9" ry="24" transform="rotate(32 472 94)"/>
+    <ellipse cx="467" cy="63" rx="9" ry="23" transform="rotate(20 467 63)"/>
+    <ellipse cx="445" cy="39" rx="9" ry="23" transform="rotate(-15 445 39)"/>
+    <ellipse cx="420" cy="23" rx="9" ry="23" transform="rotate(-44 420 23)"/>
+  </g>
+  <path d="M178 128V67c0-31 37-49 82-49s82 18 82 49v61" fill="#f8f5e9" stroke="#173c43" stroke-width="5"/>
+  <path d="M170 130h180" stroke="#173c43" stroke-width="5"/>
+  <path d="M216 128c20-30 50-35 84 0" fill="#d9c786"/>
+  <path d="M260 128V75" stroke="#5b4430" stroke-width="6"/>
+  <path d="M260 80c-31-28-45-5-25 3-27 4-17 25 9 13-13 22 13 21 16 4 11 16 30 4 13-10 26 4 24-17-7-10 16-13 5-28-6-13z" fill="#84945e"/>
+  <path d="M239 128c-21-10-30-25-34-39M281 128c21-10 30-25 34-39" fill="none" stroke="#84945e" stroke-width="5"/>
+  <path d="M249 42c9-14 22-14 30 0-10-5-20-3-30 0z" fill="#c4a75c"/>
+  <text x="260" y="157" text-anchor="middle" fill="#173c43" font-family="Georgia, serif" font-size="18" font-weight="700" letter-spacing="2">GARDEN OF PEACE</text>
+</svg>

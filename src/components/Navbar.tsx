@@ -1,5 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
-import { User, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface NavbarProps {
   user: any;

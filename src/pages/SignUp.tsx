@@ -140,7 +140,7 @@ const SignUp = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-3 transition-colors focus:outline-none focus:border-blue-400 shadow-none text-base"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               required
               minLength={6}
             />
@@ -153,7 +153,7 @@ const SignUp = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-3 transition-colors focus:outline-none focus:border-blue-400 shadow-none text-base"
-              placeholder="••••••••"
+              placeholder="Confirm your password"
               required
               minLength={6}
             />

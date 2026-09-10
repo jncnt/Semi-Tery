@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { getDisplayName } from '../lib/nameUtils';
@@ -75,6 +76,11 @@ const PlotManagement = () => {
     e.preventDefault();
     if (!reservingPlot) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('Please sign in before making a reservation.');
+      return;
+    }
     const { data: currentPlot, error: availabilityError } = await supabase
       .from('plots')
       .select('status')
@@ -119,6 +125,22 @@ const PlotManagement = () => {
 
       const { data: receiptLink } = supabase.storage.from('payment-receipts').getPublicUrl(filePath);
       receiptUrl = receiptLink.publicUrl;
+    }
+
+    const { error: inquiryError } = await supabase
+      .from('inquiries')
+      .insert({
+        customer_id: user.id,
+        customer_name: reserveContact.name,
+        phone: reserveContact.phone,
+        email: reserveContact.email || null,
+        message: reserveContact.notes || null,
+        plot_number: reservingPlot.plot_number,
+      });
+
+    if (inquiryError) {
+      alert('Error submitting inquiry: ' + inquiryError.message);
+      return;
     }
 
     const { error } = await supabase.from('reservation_requests').insert([{

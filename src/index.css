@@ -11,7 +11,7 @@
   line-height: 1.5;
   font-weight: 400;
   color: #0F172A;
-  background-color: #FFFFFF;
+  background: linear-gradient(135deg, #f1f8d8 0%, #edf9d7 25%, #f5f7d2 50%, #f9f7d4 100%);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -23,7 +23,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #FFFFFF;
+  background: linear-gradient(135deg, #f1f8d8 0%, #edf9d7 25%, #f5f7d2 50%, #f9f7d4 100%);
 }
 
 /* Custom Sleek Scrollbar */

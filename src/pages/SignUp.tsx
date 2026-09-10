@@ -24,7 +24,7 @@ const SignUp = () => {
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -37,12 +37,33 @@ const SignUp = () => {
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
-      // Force sign out so they have to manually log in
-      await supabase.auth.signOut();
-      setMessage('Registration successful! Redirecting to login...');
-      setTimeout(() => navigate('/login'), 2000);
+      return;
     }
+
+    const user = data?.user;
+    if (user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email ?? email,
+          full_name: fullName,
+          role: 'visitor'
+        }, { onConflict: 'id' })
+        .select();
+
+      if (profileError) {
+        setError(profileError.message || 'Database error saving new user');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Force sign out so they have to manually log in
+    await supabase.auth.signOut();
+    setMessage('Registration successful! Redirecting to login...');
+    setTimeout(() => navigate('/login'), 2000);
+    setLoading(false);
   };
 
   return (

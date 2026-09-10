@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -55,13 +56,35 @@ const PlotManagement = () => {
     e.preventDefault();
     if (!reservingPlot) return;
 
-    const { error } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('Please sign in before making a reservation.');
+      return;
+    }
+
+    const { error: inquiryError } = await supabase
+      .from('inquiries')
+      .insert({
+        customer_id: user.id,
+        customer_name: reserveContact.name,
+        phone: reserveContact.phone,
+        email: reserveContact.email || null,
+        message: reserveContact.notes || null,
+        plot_number: reservingPlot.plot_number,
+      });
+
+    if (inquiryError) {
+      alert('Error submitting inquiry: ' + inquiryError.message);
+      return;
+    }
+
+    const { error: reservationError } = await supabase
       .from('plots')
       .update({ status: 'reserved' })
       .eq('id', reservingPlot.id);
 
-    if (error) {
-      alert('Error processing reservation: ' + error.message);
+    if (reservationError) {
+      alert('Error processing reservation: ' + reservationError.message);
     } else {
       alert(`Success! Sanctuary plot ${reservingPlot.plot_number} has been reserved. Our team will get in touch with you shortly.`);
       setIsReserveModalOpen(false);

@@ -1,10 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Map, LogOut, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, Map, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
 
 const Sidebar = () => {
-  const { isAdmin } = useAuth();
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
@@ -13,7 +11,6 @@ const Sidebar = () => {
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/records', icon: Users, label: 'Burial Records' },
     { to: '/plots', icon: Map, label: 'Plot Management' },
-    ...(isAdmin ? [{ to: '/notifications', icon: Bell, label: 'Notifications' }] : []),
   ];
 
   return (

@@ -7,7 +7,6 @@ import PlotManagement from './pages/PlotManagement';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import MemorialPage from './pages/MemorialPage';
-import Notifications from './pages/Notifications';
 import { useAuth } from './contexts/AuthContext';
 
 function App() {
@@ -35,7 +34,6 @@ function App() {
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/records" element={<BurialRecords />} />
                       <Route path="/plots" element={<PlotManagement />} />
-                      <Route path="/notifications" element={<Notifications />} />
                       <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                   </main>

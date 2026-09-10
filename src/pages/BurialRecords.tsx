@@ -4,6 +4,7 @@ import { Filter, Edit2, Trash2, ExternalLink, Search, Plus, ChevronDown } from '
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getDisplayName } from '../lib/nameUtils';
 
 const BurialRecords = () => {
   const [records, setRecords] = useState<any[]>([]);
@@ -16,7 +17,9 @@ const BurialRecords = () => {
 
   // Form State
   const [formData, setFormData] = useState({
-    full_name: '',
+    first_name: '',
+    middle_name: '',
+    last_name: '',
     birth_date: '',
     death_date: '',
     burial_date: '',
@@ -29,7 +32,8 @@ const BurialRecords = () => {
     const { data, error } = await supabase
       .from('burial_records')
       .select('*, plots(plot_number, section)')
-      .order('full_name');
+      .order('last_name')
+      .order('first_name');
 
     if (error) console.error('Error fetching records:', error);
     else setRecords(data || []);
@@ -55,7 +59,9 @@ const BurialRecords = () => {
     if (record) {
       setEditingRecord(record);
       setFormData({
-        full_name: record.full_name,
+        first_name: record.first_name || '',
+        middle_name: record.middle_name || '',
+        last_name: record.last_name || '',
         birth_date: record.birth_date || '',
         death_date: record.death_date || '',
         burial_date: record.burial_date || '',
@@ -65,7 +71,9 @@ const BurialRecords = () => {
     } else {
       setEditingRecord(null);
       setFormData({
-        full_name: '',
+        first_name: '',
+        middle_name: '',
+        last_name: '',
         birth_date: '',
         death_date: '',
         burial_date: '',
@@ -126,7 +134,7 @@ const BurialRecords = () => {
   };
 
   const filteredRecords = records.filter(r => 
-    r.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    getDisplayName(r).toLowerCase().includes(searchTerm.toLowerCase()) ||
     (r.plots?.plot_number || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -189,7 +197,7 @@ const BurialRecords = () => {
                 filteredRecords.map((record) => (
                   <tr key={record.id} className="hover:bg-slate-50/70 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900 text-base">{record.full_name}</div>
+                      <div className="font-bold text-slate-900 text-base">{getDisplayName(record)}</div>
                     </td>
                     <td className="px-6 py-4 text-slate-600">
                       <div className="flex flex-col text-xs font-medium space-y-0.5">
@@ -255,14 +263,37 @@ const BurialRecords = () => {
             </div>
             <form onSubmit={handleSave} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  className="input-field"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <input
+                      type="text"
+                      required
+                      className="input-field"
+                      value={formData.first_name}
+                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={formData.middle_name}
+                      onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      required
+                      className="input-field"
+                      value={formData.last_name}
+                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

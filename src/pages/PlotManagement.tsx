@@ -1,8 +1,9 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { getDisplayName } from '../lib/nameUtils';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Search, Map as MapIcon, Grid, List, Leaf, Droplets, Sun, Mountain, Edit2, Trash2, X, ChevronDown, BookmarkCheck } from 'lucide-react';
+import { Plus, Search, Map as MapIcon, Grid, List, Leaf, Droplets, Sun, Mountain, Edit2, Trash2, X, ChevronDown, BookmarkCheck, Bell, Check, XCircle } from 'lucide-react';
 
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
   'Tree Shaded': <Leaf size={14} />,
@@ -23,14 +24,27 @@ const PLOT_PRICES: Record<string, number> = {
   'Bone Chamber Unit (Premium/Sealed)': 65000,
 };
 
+const PLOT_DIMENSIONS: Record<string, string> = {
+  'Bone Chamber Unit (Basic)': '0.4m x 0.4m x 0.45m',
+  'Bone Chamber Unit (Standard/Mid-range)': '0.4m x 0.4m x 0.85m to 0.5m x 0.5m x 0.9m',
+  'Bone Chamber Unit (Premium/Sealed)': 'Multi-layered vault or larger family compartment',
+};
+
 const AVAILABLE_FEATURES = ['Tree Shaded', 'Waterfront', 'Morning Sun', 'Hilltop View', 'Roadside Access', 'Private Pathway'];
+const PLOT_BLOCKS = [
+  { number: 1, section: 'St. Therese' },
+  { number: 2, section: 'St. Monica' },
+  { number: 3, section: 'St. Anne' },
+];
+const LEVELS_PER_BLOCK = 5;
+const gcashQrUrl = import.meta.env.VITE_GCASH_QR_URL || '';
 
 const PlotManagement = () => {
   const [plots, setPlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  const { isAdmin } = useAuth();
+  const { isAdmin, session } = useAuth();
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,17 +52,23 @@ const PlotManagement = () => {
 
   // Customer Reservation Modal State
   const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
+  const [isQrZoomOpen, setIsQrZoomOpen] = useState(false);
   const [reservingPlot, setReservingPlot] = useState<any>(null);
   const [reserveContact, setReserveContact] = useState({
     name: '',
     phone: '',
     email: '',
     notes: '',
+    payment_method: 'Cash',
   });
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [reservationRequests, setReservationRequests] = useState<any[]>([]);
 
   const handleOpenReserveModal = (plot: any) => {
     setReservingPlot(plot);
-    setReserveContact({ name: '', phone: '', email: '', notes: '' });
+    setIsQrZoomOpen(false);
+    setReceiptFile(null);
+    setReserveContact({ name: '', phone: '', email: '', notes: '', payment_method: 'Cash' });
     setIsReserveModalOpen(true);
   };
 
@@ -60,6 +80,51 @@ const PlotManagement = () => {
     if (!user) {
       alert('Please sign in before making a reservation.');
       return;
+    }
+    const { data: currentPlot, error: availabilityError } = await supabase
+      .from('plots')
+      .select('status')
+      .eq('id', reservingPlot.id)
+      .maybeSingle();
+
+    if (availabilityError || !currentPlot || currentPlot.status !== 'available') {
+      alert('This plot is already reserved or occupied and cannot be requested.');
+      fetchPlots();
+      return;
+    }
+
+    const { data: existingRequests } = await supabase
+      .from('reservation_requests')
+      .select('id')
+      .eq('plot_id', reservingPlot.id)
+      .eq('user_id', session?.user?.id)
+      .eq('status', 'pending')
+      .limit(1);
+
+    if (existingRequests && existingRequests.length > 0) {
+      alert('You already have a pending reservation request for this plot.');
+      return;
+    }
+
+    if (reserveContact.payment_method === 'GCash' && !receiptFile) {
+      alert('Please upload your GCash payment receipt before submitting.');
+      return;
+    }
+
+    let receiptUrl: string | null = null;
+    if (receiptFile && session?.user?.id) {
+      const filePath = `${session.user.id}/${Date.now()}-${receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, '-')}`;
+      const { error: uploadError } = await supabase.storage
+        .from('payment-receipts')
+        .upload(filePath, receiptFile, { contentType: receiptFile.type, upsert: false });
+
+      if (uploadError) {
+        alert('Error uploading receipt: ' + uploadError.message);
+        return;
+      }
+
+      const { data: receiptLink } = supabase.storage.from('payment-receipts').getPublicUrl(filePath);
+      receiptUrl = receiptLink.publicUrl;
     }
 
     const { error: inquiryError } = await supabase
@@ -78,17 +143,28 @@ const PlotManagement = () => {
       return;
     }
 
-    const { error: reservationError } = await supabase
-      .from('plots')
-      .update({ status: 'reserved' })
-      .eq('id', reservingPlot.id);
+    const { error } = await supabase.from('reservation_requests').insert([{
+      plot_id: reservingPlot.id,
+      user_id: session?.user?.id,
+      requester_name: reserveContact.name,
+      requester_phone: reserveContact.phone,
+      requester_email: reserveContact.email || null,
+      notes: reserveContact.notes || null,
+      payment_method: reserveContact.payment_method,
+      payment_status: 'pending',
+      plot_price: reservingPlot.price || 0,
+      reservation_fee: reservingPlot.reservation_fee || 0,
+      total_amount: (reservingPlot.price || 0) + (reservingPlot.reservation_fee || 0),
+      receipt_url: receiptUrl,
+      status: 'pending',
+    }]);
 
-    if (reservationError) {
-      alert('Error processing reservation: ' + reservationError.message);
+    if (error) {
+      alert('Error submitting reservation request: ' + error.message);
     } else {
-      alert(`Success! Sanctuary plot ${reservingPlot.plot_number} has been reserved. Our team will get in touch with you shortly.`);
+      alert(`Your reservation request for plot ${reservingPlot.plot_number} was submitted. You will be notified when it is approved or rejected.`);
       setIsReserveModalOpen(false);
-      fetchPlots();
+      fetchReservationRequests();
     }
   };
 
@@ -99,6 +175,7 @@ const PlotManagement = () => {
     status: 'available',
     type: 'Bone Chamber Unit (Basic)',
     price: '28000',
+    reservation_fee: '0',
     size: '',
     features: [] as string[]
   });
@@ -107,7 +184,7 @@ const PlotManagement = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('plots')
-      .select('*, burial_records(id, full_name)')
+      .select('*, burial_records(id, first_name, middle_name, last_name)')
       .order('plot_number');
 
     if (error) console.error('Error fetching plots:', error);
@@ -115,20 +192,111 @@ const PlotManagement = () => {
     setLoading(false);
   };
 
+  const fetchReservationRequests = async () => {
+    let query = supabase
+      .from('reservation_requests')
+      .select('*, plots(plot_number, section, status)')
+      .order('created_at', { ascending: false });
+
+    if (!isAdmin && session?.user?.id) query = query.eq('user_id', session.user.id);
+
+    const { data, error } = await query;
+    if (error) console.error('Error fetching reservation requests:', error);
+    else setReservationRequests(data || []);
+  };
+
   useEffect(() => {
     fetchPlots();
-  }, []);
+    fetchReservationRequests();
+  }, [isAdmin, session?.user?.id]);
+
+  const updateReservationRequest = async (request: any, status: 'approved' | 'rejected') => {
+    if (status === 'approved') {
+      if (request.payment_method === 'GCash' && request.payment_status !== 'paid') {
+        alert('This reservation cannot be approved until the GCash payment is marked as paid.');
+        return;
+      }
+
+      const { data: updatedPlot, error: plotError } = await supabase
+        .from('plots')
+        .update({ status: 'reserved' })
+        .eq('id', request.plot_id)
+        .eq('status', 'available')
+        .select('id')
+        .maybeSingle();
+
+      if (plotError || !updatedPlot) {
+        await supabase.from('reservation_requests').update({
+          status: 'rejected',
+          decision_note: 'This plot is no longer available because it was reserved or occupied.',
+        }).eq('id', request.id);
+        alert('This request was rejected because the plot is already reserved or occupied.');
+        fetchPlots();
+        fetchReservationRequests();
+        return;
+      }
+    }
+
+    const { error } = await supabase
+      .from('reservation_requests')
+      .update({ status, decision_note: status === 'approved' ? 'Reservation approved.' : 'Reservation request rejected.' })
+      .eq('id', request.id);
+
+    if (error) alert('Error updating reservation request: ' + error.message);
+    else {
+      if (status === 'approved') {
+        await supabase
+          .from('reservation_requests')
+          .update({
+            status: 'rejected',
+            decision_note: 'This plot was awarded to another reservation request.',
+          })
+          .eq('plot_id', request.plot_id)
+          .eq('status', 'pending')
+          .neq('id', request.id);
+      }
+      alert(status === 'approved' ? 'Reservation approved.' : 'Reservation rejected.');
+      fetchPlots();
+      fetchReservationRequests();
+    }
+  };
+
+  const markReservationPaid = async (request: any) => {
+    const { error } = await supabase
+      .from('reservation_requests')
+      .update({ payment_status: 'paid' })
+      .eq('id', request.id)
+      .eq('payment_status', 'pending');
+
+    if (error) alert('Error updating payment: ' + error.message);
+    else fetchReservationRequests();
+  };
+
+  const moveReservationToTrash = async (request: any) => {
+    if (!confirm('Move this pending reservation request to trash?')) return;
+
+    const { error } = await supabase
+      .from('reservation_requests')
+      .delete()
+      .eq('id', request.id)
+      .eq('user_id', session?.user?.id)
+      .eq('status', 'pending');
+
+    if (error) alert('Error moving request to trash: ' + error.message);
+    else fetchReservationRequests();
+  };
 
   const handleOpenModal = (plot: any = null) => {
     if (plot) {
       setEditingPlot(plot);
       setFormData({
         plot_number: plot.plot_number,
-        section: plot.section || '',
+        section: getSectionForPlot(plot.plot_number) || plot.section || '',
         status: plot.status || 'available',
         type: plot.type || 'Bone Chamber Unit (Basic)',
         price: plot.price?.toString() || '',
-        size: plot.size || '',
+        reservation_fee: plot.reservation_fee?.toString() || '0',
+        size: plot.size || PLOT_DIMENSIONS[plot.type] || '',
         features: plot.features || [],
       });
     } else {
@@ -139,7 +307,8 @@ const PlotManagement = () => {
         status: 'available',
         type: 'Bone Chamber Unit (Basic)',
         price: '28000',
-        size: '',
+        reservation_fee: '100',
+        size: PLOT_DIMENSIONS['Bone Chamber Unit (Basic)'],
         features: [],
       });
     }
@@ -157,9 +326,26 @@ const PlotManagement = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.status === 'reserved' && editingPlot?.status !== 'reserved') {
+      const { data: pendingPayment } = await supabase
+        .from('reservation_requests')
+        .select('id, payment_method, payment_status')
+        .eq('plot_id', editingPlot?.id)
+        .eq('status', 'pending')
+        .eq('payment_method', 'GCash')
+        .eq('payment_status', 'pending')
+        .maybeSingle();
+
+      if (pendingPayment) {
+        alert('This plot cannot be changed to reserved until the pending GCash payment is marked as paid.');
+        return;
+      }
+    }
+
     const payload = {
       ...formData,
-      price: formData.price ? parseFloat(formData.price) : null
+      price: formData.price ? parseFloat(formData.price) : null,
+      reservation_fee: formData.reservation_fee ? parseFloat(formData.reservation_fee) : 0,
     };
 
     if (editingPlot) {
@@ -184,9 +370,9 @@ const PlotManagement = () => {
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-white text-blue-600 border-blue-200 shadow-sm';
-      case 'occupied': return 'bg-blue-600 text-white border-blue-600 shadow-sm';
-      case 'reserved': return 'bg-blue-50 text-blue-800 border-blue-300 shadow-sm';
+      case 'available': return 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm';
+      case 'occupied': return 'bg-rose-50 text-rose-700 border-rose-200 shadow-sm';
+      case 'reserved': return 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
@@ -195,6 +381,15 @@ const PlotManagement = () => {
     p.plot_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.section || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const plotNumberOptions = PLOT_BLOCKS.flatMap(block =>
+    Array.from({ length: LEVELS_PER_BLOCK }, (_, levelIndex) => `BLK-${block.number} L${levelIndex + 1}`)
+  );
+
+  const getSectionForPlot = (plotNumber: string) => {
+    const blockNumber = Number(plotNumber.match(/^BLK-(\d+)/)?.[1]);
+    return PLOT_BLOCKS.find(block => block.number === blockNumber)?.section || '';
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 font-sans pb-10">
@@ -237,6 +432,69 @@ const PlotManagement = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+
+      {reservationRequests.length > 0 && (
+        <section className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+            <Bell size={18} className="text-amber-600" />
+            <h2 className="font-bold text-gray-900">{isAdmin ? 'Reservation Requests' : 'My Reservation Requests'}</h2>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {reservationRequests.map((request) => (
+              <div key={request.id} className="px-6 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    Plot {request.plots?.plot_number || 'Unknown'}
+                    {isAdmin && <span className="font-normal text-gray-500"> requested by {request.requester_name}</span>}
+                  </p>
+                  <p className="text-sm text-gray-500">{request.plots?.section || 'Main Section'}{request.requester_phone ? ` | ${request.requester_phone}` : ''}</p>
+                  <p className="text-sm text-gray-500 mt-1">Payment: <span className="font-semibold text-gray-700">{request.payment_method || 'Not selected'}</span> ({request.payment_status || 'pending'})</p>
+                  {request.receipt_url && <a href={request.receipt_url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">View payment receipt</a>}
+                  {request.decision_note && <p className="text-sm text-gray-600 mt-1">{request.decision_note}</p>}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                    request.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
+                    request.status === 'rejected' ? 'bg-rose-50 text-rose-700' :
+                    'bg-amber-50 text-amber-700'
+                  }`}>
+                    {request.status}
+                  </span>
+                  {isAdmin && request.status === 'pending' && (
+                    <>
+                      {request.payment_method === 'GCash' && request.payment_status !== 'paid' && (
+                        <button onClick={() => markReservationPaid(request)} className="px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg" title="Mark GCash payment as paid">
+                          Mark Paid
+                        </button>
+                      )}
+                      <button
+                        onClick={() => updateReservationRequest(request, 'approved')}
+                        disabled={request.payment_method === 'GCash' && request.payment_status !== 'paid'}
+                        className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg disabled:text-gray-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                        title="Approve reservation"
+                      >
+                        <Check size={18} />
+                      </button>
+                      <button onClick={() => updateReservationRequest(request, 'rejected')} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg" title="Reject reservation">
+                        <XCircle size={18} />
+                      </button>
+                    </>
+                  )}
+                  {!isAdmin && request.status === 'pending' && (
+                    <button
+                      onClick={() => moveReservationToTrash(request)}
+                      className="p-2 text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
+                      title="Move request to trash"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {loading ? (
         <div className="py-20 text-center text-gray-400 animate-pulse">Summoning sanctuaries...</div>
@@ -283,13 +541,19 @@ const PlotManagement = () => {
                     {plot.burial_records && plot.burial_records.length > 0 && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-500 font-medium">Occupant</span>
-                        <span className="text-blue-600 font-semibold">{plot.burial_records[0].full_name}</span>
+                        <span className="text-blue-600 font-semibold">{getDisplayName(plot.burial_records[0])}</span>
                       </div>
                     )}
                     {plot.price && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-500 font-medium">Value</span>
                         <span className="text-emerald-600 font-bold">₱{plot.price.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {plot.reservation_fee > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500 font-medium">Reservation Fee</span>
+                        <span className="text-amber-600 font-bold">₱{plot.reservation_fee.toLocaleString()}</span>
                       </div>
                     )}
                   </div>
@@ -368,23 +632,36 @@ const PlotManagement = () => {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Plot Number *</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
-                    placeholder="e.g. BLK-1 L-10"
-                    value={formData.plot_number}
-                    onChange={(e) => setFormData({ ...formData, plot_number: e.target.value })}
-                  />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <select
+                        required
+                        className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                        value={formData.plot_number}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          plot_number: e.target.value,
+                          section: getSectionForPlot(e.target.value),
+                        })}
+                      >
+                        <option value="">Select plot number</option>
+                        {plotNumberOptions.map(plotNumber => (
+                          <option key={plotNumber} value={plotNumber}>{plotNumber}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1.5">Each block includes L1 through L5.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Section / Garden</label>
                   <input
                     type="text"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
-                    placeholder="e.g. Garden of Peace"
+                    readOnly
+                    className="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-gray-600 font-medium cursor-not-allowed"
+                    placeholder="Selected automatically"
                     value={formData.section}
-                    onChange={(e) => setFormData({ ...formData, section: e.target.value })}
                   />
                 </div>
               </div>
@@ -401,7 +678,8 @@ const PlotManagement = () => {
                         setFormData({ 
                           ...formData, 
                           type: newType, 
-                          price: PLOT_PRICES[newType] ? PLOT_PRICES[newType].toString() : formData.price 
+                          price: PLOT_PRICES[newType] ? PLOT_PRICES[newType].toString() : formData.price,
+                          size: PLOT_DIMENSIONS[newType] || formData.size,
                         });
                       }}
                     >
@@ -441,13 +719,25 @@ const PlotManagement = () => {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Reservation Extra Charge (₱)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                    placeholder="e.g. 500"
+                    value={formData.reservation_fee}
+                    onChange={(e) => setFormData({ ...formData, reservation_fee: e.target.value })}
+                  />
+                </div>
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Dimensions / Size</label>
                   <input
                     type="text"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
-                    placeholder="e.g. 1.0m x 2.5m"
+                    readOnly
+                    className="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-gray-600 font-medium cursor-not-allowed"
+                    placeholder="Selected automatically"
                     value={formData.size}
-                    onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                   />
                 </div>
               </div>
@@ -501,7 +791,7 @@ const PlotManagement = () => {
 
       {isReserveModalOpen && reservingPlot && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl shadow-black/20 transform animate-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden shadow-2xl shadow-black/20 transform animate-in slide-in-from-bottom-4 duration-300">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 tracking-tight">
@@ -518,7 +808,7 @@ const PlotManagement = () => {
               </button>
             </div>
 
-            <form onSubmit={handleConfirmReservation} className="p-8 space-y-4">
+            <form onSubmit={handleConfirmReservation} className="p-8 space-y-4 overflow-y-auto min-h-0">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Your Full Name *</label>
                 <input
@@ -565,6 +855,74 @@ const PlotManagement = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Payment Method *</label>
+                <div className="relative">
+                  <select
+                    required
+                    className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                    value={reserveContact.payment_method}
+                    onChange={(e) => setReserveContact({ ...reserveContact, payment_method: e.target.value })}
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="GCash">GCash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                  </select>
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                </div>
+                <p className="text-xs text-gray-400 mt-1.5">Payment remains pending until staff confirms the reservation.</p>
+                {reserveContact.payment_method === 'GCash' && (
+                  <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-center">
+                    <p className="text-sm font-bold text-gray-800">Scan to pay with GCash</p>
+                    {gcashQrUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsQrZoomOpen(true)}
+                        className="mx-auto mt-3 block cursor-zoom-in rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        title="Click to enlarge QR code"
+                      >
+                        <img
+                          src={gcashQrUrl}
+                          alt="GCash payment QR code. Click to enlarge."
+                          className="h-48 w-48 rounded-xl border-4 border-white bg-white object-contain shadow-sm"
+                        />
+                      </button>
+                    ) : (
+                      <p className="mt-2 text-xs text-gray-500">GCash QR code is not configured yet.</p>
+                    )}
+                    <p className="mt-3 text-xs text-gray-500">Complete the payment, then submit your reservation request for staff confirmation.</p>
+                  </div>
+                )}
+                {reserveContact.payment_method === 'GCash' && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Upload GCash Receipt *</label>
+                    <input
+                      type="file"
+                      required
+                      accept="image/*,.pdf"
+                      className="w-full rounded-xl border border-gray-200 bg-white p-3 text-sm"
+                      onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Upload a screenshot or PDF after completing the payment.</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Plot price</span>
+                  <span>₱{(reservingPlot.price || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600 mt-1">
+                  <span>Reservation extra charge</span>
+                  <span>₱{(reservingPlot.reservation_fee || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold text-gray-900 border-t border-gray-200 mt-3 pt-3">
+                  <span>Total amount</span>
+                  <span>₱{((reservingPlot.price || 0) + (reservingPlot.reservation_fee || 0)).toLocaleString()}</span>
+                </div>
+              </div>
+
               <div className="pt-6 border-t border-gray-100 flex justify-end gap-3">
                 <button
                   type="button"
@@ -581,6 +939,28 @@ const PlotManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {isQrZoomOpen && gcashQrUrl && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-6 backdrop-blur-sm"
+          onClick={() => setIsQrZoomOpen(false)}
+        >
+          <div className="relative max-w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setIsQrZoomOpen(false)}
+              className="absolute -right-3 -top-3 rounded-full bg-white p-2 text-gray-600 shadow-lg hover:bg-gray-100"
+              title="Close enlarged QR code"
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={gcashQrUrl}
+              alt="Enlarged GCash payment QR code"
+              className="max-h-[85vh] max-w-[min(90vw,32rem)] rounded-2xl bg-white p-3 shadow-2xl"
+            />
           </div>
         </div>
       )}

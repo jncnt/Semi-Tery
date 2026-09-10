@@ -24,46 +24,80 @@ const SignUp = () => {
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      const response = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
         }
-      }
-    });
+      });
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-      return;
-    }
+      // Log full response for debugging database / trigger errors
+      // (Console output will show the server error details)
+      console.debug('signUp response', response);
 
-    const user = data?.user;
-    if (user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          email: user.email ?? email,
-          full_name: fullName,
-          role: 'visitor'
-        }, { onConflict: 'id' })
-        .select();
+      const { error } = response;
 
-      if (profileError) {
-        setError(profileError.message || 'Database error saving new user');
+      if (error) {
+        const details = (error as any).details ? ` (${(error as any).details})` : '';
+        setError(`${error.message}${details}`);
+        console.error('Sign up error:', error);
         setLoading(false);
         return;
       }
-    }
 
-    // Force sign out so they have to manually log in
-    await supabase.auth.signOut();
-    setMessage('Registration successful! Redirecting to login...');
-    setTimeout(() => navigate('/login'), 2000);
-    setLoading(false);
+      // Best-effort: try to create/update a profiles row for the new user.
+      // Some Supabase projects rely on an auth trigger (on_auth_user_created) to create this row;
+      // using upsert prevents duplicate key errors if the trigger ran already.
+      try {
+        const user = (response as any).data?.user;
+        if (user?.id) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert([{ id: user.id, full_name: fullName }], { onConflict: 'id' });
+
+          if (profileError) {
+            console.warn('Profile creation/upsert notice:', profileError);
+            const errMsg = (profileError as any).message || '';
+            const isDuplicate = (profileError as any).code === '23505' || errMsg.includes('duplicate key');
+            const isMissingTable = errMsg.includes('relation "profiles" does not exist');
+
+            if (isMissingTable) {
+              console.error(
+                'Missing profiles table — run this SQL to create it:\n',
+                `create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  full_name text,
+  role text default 'visitor',
+  avatar_url text,
+  created_at timestamptz default now()
+);`
+              );
+            }
+
+            // If it's NOT a harmless duplicate key conflict, log it for debugging
+            if (!isDuplicate && !isMissingTable) {
+              console.info('User account was created, but profile update requires elevated policy or trigger.');
+            }
+          }
+        }
+      } catch (innerErr) {
+        console.error('Non-fatal error creating profile:', innerErr);
+      }
+
+      // Force sign out so they have to manually log in
+      await supabase.auth.signOut();
+      setMessage('Registration successful! Redirecting to login...');
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err) {
+      // Unexpected runtime error
+      console.error('Unexpected error during sign up', err);
+      setError('Unexpected error during registration. Check console for details.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -106,7 +140,7 @@ const SignUp = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-3 transition-colors focus:outline-none focus:border-blue-400 shadow-none text-base"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               required
               minLength={6}
             />
@@ -119,7 +153,7 @@ const SignUp = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-3 transition-colors focus:outline-none focus:border-blue-400 shadow-none text-base"
-              placeholder="••••••••"
+              placeholder="Confirm your password"
               required
               minLength={6}
             />

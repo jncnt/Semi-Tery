@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Map, LogOut, Trees, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, Map, LogOut, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,9 +19,11 @@ const Sidebar = () => {
   return (
     <aside className="w-68 border-r border-slate-200/80 flex flex-col h-screen sticky top-0 bg-white select-none z-20">
       <div className="p-6 border-b border-slate-100 mb-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
-          <Trees size={22} strokeWidth={2.2} />
-        </div>
+        <img
+          src="/garden-of-peace-favicon.svg"
+          alt="Garden of Peace Memorial Park"
+          className="w-10 h-10 rounded-2xl border border-[#d8ddca] shadow-sm shrink-0"
+        />
         <div>
           <h1 className="text-base font-extrabold text-slate-900 tracking-tight leading-tight">
             GARDEN OF PEACE

@@ -59,7 +59,7 @@ const Notifications = () => {
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Notifications</h1>
           <p className="text-slate-500 mt-1 text-sm">Customer inquiries and reservation requests.</p>
         </div>
-        <div className="rounded-xl bg-blue-50 p-3 text-blue-600"><Bell size={22} /></div>
+        <div className="rounded-xl bg-[#E8F0EA] p-3 text-[#2F5D50]"><Bell size={22} /></div>
       </div>
 
       {loading ? (

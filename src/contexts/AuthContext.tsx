@@ -21,6 +21,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const devBypassSession = localStorage.getItem('dev-bypass-session');
+
+    if (devBypassSession) {
+      try {
+        const parsedSession = JSON.parse(devBypassSession);
+        setSession(parsedSession);
+        setUserProfile({
+          id: parsedSession.user?.id || 'dev-bypass-user',
+          full_name: 'Development Bypass User',
+          role: 'admin',
+          email: parsedSession.user?.email || 'admin@local.test',
+        });
+        setLoading(false);
+        return;
+      } catch (error) {
+        console.warn('Invalid dev bypass session found, clearing it.', error);
+        localStorage.removeItem('dev-bypass-session');
+      }
+    }
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);

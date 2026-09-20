@@ -1,17 +1,27 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #2563EB;
-  --color-primary-hover: #1D4ED8;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-primary: #2F5D50;
+  --color-primary-hover: #1F4035;
+  --font-sans: 'Nunito Sans', 'Trebuchet MS', system-ui, sans-serif;
 }
 
 :root {
   font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
-  color: #0F172A;
-  background: linear-gradient(135deg, #f1f8d8 0%, #edf9d7 25%, #f5f7d2 50%, #f9f7d4 100%);
+  color: #26332D;
+  background: #F7F4EC;
+
+  --forest: #2F5D50;
+  --forest-dark: #1F4035;
+  --sage: #8FAF9A;
+  --sage-light: #E8F0EA;
+  --cream: #F7F4EC;
+  --gold: #C6A15B;
+  --text: #26332D;
+  --muted: #6B756F;
+  --border: #E1E7E2;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -23,7 +33,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f1f8d8 0%, #edf9d7 25%, #f5f7d2 50%, #f9f7d4 100%);
+  background: var(--cream);
 }
 
 /* Custom Sleek Scrollbar */
@@ -35,23 +45,65 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #B7C8BC;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: var(--sage);
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 hover:bg-blue-700 active:scale-[0.98] shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 focus:outline-none focus:ring-2 focus:ring-blue-500/40;
+    @apply bg-[#2F5D50] text-white px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 hover:bg-[#1F4035] active:scale-[0.98] shadow-md shadow-[#2F5D50]/20 hover:shadow-lg hover:shadow-[#2F5D50]/30 focus:outline-none focus:ring-2 focus:ring-[#8FAF9A]/50;
   }
 
   .input-field {
-    @apply w-full bg-white border border-slate-200 rounded-xl p-3 px-4 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800 font-medium placeholder:text-slate-400;
+    @apply w-full bg-white border border-[#E1E7E2] rounded-xl p-3 px-4 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#8FAF9A]/30 focus:border-[#2F5D50] text-[#26332D] font-medium placeholder:text-[#9AA69F];
   }
 
   .card {
-    @apply bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200;
+    @apply bg-white border border-[#E1E7E2] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200;
   }
+}
+
+/* Preserve existing utility markup while shifting the older blue/gray surfaces
+   to the Garden of Peace palette. */
+[class~="text-blue-600"], [class~="text-blue-700"], [class~="text-primary"] { color: var(--forest) !important; }
+[class~="bg-blue-600"], [class~="bg-primary"] { background-color: var(--forest) !important; }
+[class~="hover:bg-blue-700"]:hover, [class~="hover:bg-primary-hover"]:hover { background-color: var(--forest-dark) !important; }
+[class~="bg-blue-50"], [class~="bg-blue-50/80"] { background-color: var(--sage-light) !important; }
+[class~="hover:bg-blue-50"]:hover { background-color: var(--sage-light) !important; }
+[class~="border-blue-100"], [class~="border-blue-200"] { border-color: #C7D9CC !important; }
+[class~="focus:border-blue-500"]:focus, [class~="focus:border-blue-300"]:focus { border-color: var(--forest) !important; }
+[class~="focus:ring-blue-500\/20"]:focus, [class~="focus:ring-blue-50"]:focus { --tw-ring-color: rgb(143 175 154 / 0.3) !important; }
+[class~="text-slate-900"], [class~="text-gray-900"] { color: var(--text) !important; }
+[class~="text-slate-800"], [class~="text-gray-800"] { color: #34443B !important; }
+[class~="text-slate-600"], [class~="text-gray-600"], [class~="text-slate-500"], [class~="text-gray-500"] { color: var(--muted) !important; }
+[class~="text-slate-400"], [class~="text-gray-400"] { color: #8A968E !important; }
+[class~="bg-slate-50"], [class~="bg-slate-50/80"], [class~="bg-gray-50"], [class~="bg-gray-50/50"] { background-color: #F4F7F3 !important; }
+[class~="bg-slate-100"], [class~="bg-gray-100"], [class~="bg-gray-100/80"] { background-color: #EDF2ED !important; }
+[class~="border-slate-100"], [class~="border-slate-200"], [class~="border-gray-100"], [class~="border-gray-200"] { border-color: var(--border) !important; }
+[class~="divide-slate-100"] > :not([hidden]) ~ :not([hidden]), [class~="divide-gray-100"] > :not([hidden]) ~ :not([hidden]) { border-color: var(--border) !important; }
+[class~="hover:bg-slate-50"]:hover, [class~="hover:bg-slate-50/70"]:hover, [class~="hover:bg-gray-50"]:hover { background-color: #F4F7F3 !important; }
+[class~="hover:bg-slate-100"]:hover, [class~="hover:bg-gray-100"]:hover { background-color: #EAF1EB !important; }
+[class~="text-emerald-600"], [class~="text-emerald-700"] { color: var(--forest) !important; }
+[class~="bg-emerald-50"], [class~="bg-emerald-50/80"] { background-color: var(--sage-light) !important; }
+[class~="border-emerald-200"] { border-color: #C7D9CC !important; }
+[class~="text-amber-600"], [class~="text-amber-700"] { color: #8A6A2F !important; }
+[class~="bg-amber-50"] { background-color: #F5EEDB !important; }
+[class~="border-amber-200"], [class~="border-amber-200/70"], [class~="border-amber-200/80"] { border-color: #E7D7AD !important; }
+[class~="text-rose-600"], [class~="text-rose-700"], [class~="text-red-600"] { color: #76534B !important; }
+[class~="bg-rose-50"], [class~="bg-red-50"] { background-color: #F1E5E2 !important; }
+[class~="border-rose-200"], [class~="border-red-100"] { border-color: #E0C9C3 !important; }
+[class~="hover:bg-red-50"]:hover, [class~="hover:bg-rose-50"]:hover { background-color: #F1E5E2 !important; }
+[class~="hover:text-red-600"]:hover, [class~="hover:text-rose-600"]:hover { color: #76534B !important; }
+[class~="focus:border-blue-400"]:focus { border-color: var(--forest) !important; }
+[class~="text-red-400"] { color: #A9796B !important; }
+[class~="text-sky-600"] { color: #557D69 !important; }
+[class~="bg-sky-50"], [class~="bg-indigo-50"] { background-color: #E7EFE8 !important; }
+[class~="text-indigo-600"] { color: var(--forest-dark) !important; }
+[class~="shadow-blue-500\/20"], [class~="shadow-blue-500\/30"] { --tw-shadow-color: rgb(47 93 80 / 0.2) !important; }
+
+@media (max-width: 767px) {
+  main { padding: 1.25rem !important; }
 }

@@ -56,15 +56,15 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-12 font-sans bg-white">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-100 pb-6">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-12 font-sans">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#E1E7E2] pb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">System Dashboard</h1>
           <p className="text-slate-500 mt-1 text-sm">Real-time overview of cemetery operations and plot reservations.</p>
         </div>
         <Link
           to="/plots"
-          className="btn-primary flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 w-fit"
+          className="btn-primary flex items-center justify-center gap-2 w-fit"
         >
           <BookmarkCheck size={18} strokeWidth={2.2} />
           <span>Browse & Reserve Plots</span>
@@ -72,11 +72,11 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard icon={MapPin} label="Total Plots" value={stats.totalPlots} bgClass="bg-blue-50/80" iconColor="text-blue-600" ringColor="ring-blue-500/10" />
-        <StatCard icon={CheckCircle2} label="Occupied Plots" value={stats.occupiedPlots} bgClass="bg-emerald-50/80" iconColor="text-emerald-600" ringColor="ring-emerald-500/10" />
-        <StatCard icon={BookmarkCheck} label="Reserved Plots" value={stats.reservedPlotsCount} bgClass="bg-amber-50/80" iconColor="text-amber-600" ringColor="ring-amber-500/10" />
-        <StatCard icon={Clock} label="Available Plots" value={stats.availablePlots} bgClass="bg-sky-50/80" iconColor="text-sky-600" ringColor="ring-sky-500/10" />
-        <StatCard icon={Users} label="Total Records" value={stats.totalRecords} bgClass="bg-indigo-50/80" iconColor="text-indigo-600" ringColor="ring-indigo-500/10" />
+        <StatCard icon={MapPin} label="Total Plots" value={stats.totalPlots} bgClass="bg-[#E8F0EA]" iconColor="text-[#2F5D50]" ringColor="ring-[#8FAF9A]/30" />
+        <StatCard icon={CheckCircle2} label="Occupied Plots" value={stats.occupiedPlots} bgClass="bg-[#F1E5E2]" iconColor="text-[#76534B]" ringColor="ring-[#B88F83]/30" />
+        <StatCard icon={BookmarkCheck} label="Reserved Plots" value={stats.reservedPlotsCount} bgClass="bg-[#F5EEDB]" iconColor="text-[#8A6A2F]" ringColor="ring-[#C6A15B]/30" />
+        <StatCard icon={Clock} label="Available Plots" value={stats.availablePlots} bgClass="bg-[#E8F0EA]" iconColor="text-[#2F5D50]" ringColor="ring-[#8FAF9A]/30" />
+        <StatCard icon={Users} label="Total Records" value={stats.totalRecords} bgClass="bg-[#E5EEE8]" iconColor="text-[#1F4035]" ringColor="ring-[#8FAF9A]/30" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -87,7 +87,7 @@ const Dashboard = () => {
               <h3 className="font-extrabold text-slate-900 text-lg tracking-tight">Recent Burials</h3>
               <p className="text-xs text-slate-400 mt-0.5">Most recently updated deceased records</p>
             </div>
-            <Link to="/records" className="text-blue-600 hover:text-blue-700 text-xs font-bold flex items-center gap-1.5 hover:gap-2 transition-all">
+            <Link to="/records" className="text-[#2F5D50] hover:text-[#1F4035] text-xs font-bold flex items-center gap-1.5 hover:gap-2 transition-all">
               <span>View All</span>
               <ArrowRight size={14} />
             </Link>
@@ -145,7 +145,7 @@ const Dashboard = () => {
               <h3 className="font-extrabold text-slate-900 text-lg tracking-tight">Reserved Plots</h3>
               <p className="text-xs text-slate-400 mt-0.5">Currently reserved sanctuary plots</p>
             </div>
-            <Link to="/plots" className="text-blue-600 hover:text-blue-700 text-xs font-bold flex items-center gap-1 hover:gap-1.5 transition-all">
+            <Link to="/plots" className="text-[#2F5D50] hover:text-[#1F4035] text-xs font-bold flex items-center gap-1 hover:gap-1.5 transition-all">
               <span>Manage</span>
               <ArrowRight size={14} />
             </Link>
@@ -176,7 +176,7 @@ const Dashboard = () => {
             <div className="mt-6 pt-4 border-t border-slate-100">
               <Link
                 to="/plots"
-                className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
+                className="w-full py-2.5 px-4 bg-[#2F5D50] hover:bg-[#1F4035] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
               >
                 <BookmarkCheck size={16} />
                 <span>Reserve A Plot Now</span>

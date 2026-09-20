@@ -31,10 +31,10 @@ const MemorialPage = () => {
   if (!record) return <div className="min-h-screen flex items-center justify-center bg-white text-gray-600">Record not found.</div>;
 
   return (
-    <div className="min-h-screen bg-white font-sans text-gray-800 pb-20">
+    <div className="min-h-screen bg-[#F7F4EC] font-sans text-gray-800 pb-20">
       {/* Respectful Header Cover */}
-      <div className="h-64 bg-gray-50 flex items-center justify-center border-b border-gray-100">
-        <Feather className="text-gray-200" size={64} strokeWidth={1} />
+      <div className="h-64 bg-[#E8F0EA] flex items-center justify-center border-b border-[#D6E3D9]">
+        <Feather className="text-[#8FAF9A]" size={64} strokeWidth={1} />
       </div>
 
       <div className="max-w-3xl mx-auto px-6 -mt-32">

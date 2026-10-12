@@ -15,11 +15,13 @@ const Sidebar = () => {
           { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
           { to: '/records', icon: Users, label: 'Burial Records' },
           { to: '/plots', icon: Map, label: 'Plot Management' },
+          { to: '/vicinity-map', icon: Map, label: 'Vicinity Map' },
           { to: '/notifications', icon: Bell, label: 'Notifications' },
         ]
       : [
           { to: '/', icon: Map, label: 'Home' },
           { to: '/plots', icon: Map, label: 'Browse Available Plots' },
+          { to: '/vicinity-map', icon: Map, label: 'Vicinity Map' },
           { to: '/reservations', icon: BookmarkCheck, label: 'My Reservations' },
           { to: '/account', icon: UserCircle, label: 'My Account' },
         ]),
